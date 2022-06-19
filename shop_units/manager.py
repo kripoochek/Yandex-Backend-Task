@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List
+from typing import List, Dict, Union
 from uuid import UUID
 from exceptions import NotFoundError, ValidationError
 from shop_units.dao import DAO
@@ -8,7 +8,8 @@ from dto import ShopUnitImport, ShopUnit
 
 def is_datetime_valid(dt_str):
     try:
-        datetime.fromisoformat(dt_str.replace('Z', '+00:00'))
+        dt_str_new = dt_str.replace('Z', '+00:00')
+        datetime.fromisoformat(dt_str_new)
     except:
         return False
     return True
@@ -23,7 +24,7 @@ def is_valid_uuid(value):
         return False
 
 
-def price_counter(unit: ShopUnit):
+def price_counter(unit: Union["ShopUnit", "ShopUnitChildren"]):
     if unit.price is not None:
         return
     if not hasattr(unit, "children"):
@@ -36,53 +37,18 @@ def price_counter(unit: ShopUnit):
             count_children_with_price += 1
             sum_price += unit.children[i].price
     if count_children_with_price != 0:
-        unit.price = sum_price // count_children_with_price
+        unit.price = sum_price
 
 
-def str_response_format_children(children: List["ShopUnit"], indent: str) -> str:
-    children_str = """\n%s"children": [""" % indent
-    for child in children:
-        if child.parentId is not None:
-            child.parentId = '"' + child.parentId + '"'
-        children_str += """\n%s  {
-%s    "name": "%s",
-%s    "id": "%s",
-%s    "price": %s,
-%s    "date": "%s",
-%s    "type": "%s",
-%s    "parentId": %s""" % (
-            indent, indent, child.name, indent, child.id, indent, child.price, indent, child.date, indent, child.type,
-            indent, child.parentId)
-        if hasattr(child, "children"):
-            children_str += ","
-            children_str += str_response_format_children(child.children, indent + "    ")
-        children_str += "\n%s  }" % indent
-        if child != children[len(children) - 1]:
-            children_str += ","
-    new_indent = indent[2:]
-    children_str += "\n%s  ]" % new_indent
-    return children_str
-
-
-def str_response_format_unit(unit: ShopUnit) -> str:
-    if unit.parentId is not None:
-        unit.parentId = '"' + unit.parentId + '"'
-    item_str = """{
-  "id": "%s",
-  "name": "%s",
-  "type": "%s",
-  "parentId": %s,
-  "date": "%s",
-  "price": %s""" % (unit.id, unit.name, unit.type, unit.parentId, unit.date, unit.price)
-    if hasattr(unit, "children"):
-        item_str += ","
-        item_str += str_response_format_children(unit.children, "  ")
-    item_str += "\n}"
-    return item_str
+def make_children_dict(children: List["ShopUnit"]):
+    for i in range(len(children)):
+        if hasattr(children[i], "children"):
+            pass
 
 
 class Manager:
     def __init__(self, dao: DAO):
+        print("initialize manager")
         self.dao = dao
 
     def import_nodes(self, items: List["ShopUnitImport"], update_date: str):
@@ -109,12 +75,12 @@ class Manager:
                 raise ValidationError
         self.dao.insert_or_update(items, update_date)
 
-    def get_node(self, item_id: str) -> str:
+    def get_node(self, item_id: str) -> ShopUnit:
         if not is_valid_uuid(item_id):
             raise ValidationError
         shop_unit = self.dao.get_item(item_id)
         price_counter(shop_unit)
-        return str_response_format_unit(shop_unit)
+        return shop_unit
 
     def delete_node(self, item_id: str):
         if not is_valid_uuid(item_id):

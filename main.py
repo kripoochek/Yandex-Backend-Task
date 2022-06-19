@@ -1,14 +1,8 @@
-from exceptions import ValidationError
-from handler import router
-from fastapi import FastAPI
+from starlette.applications import Starlette
+from handler import routes, startup
 import uvicorn
 
 
-def get_application(include_router):
-    return include_router
-
-
-app = get_application(router)
-
+app = Starlette(debug=True, routes=routes, on_startup=[startup])
 if __name__ == "__main__":
     uvicorn.run("main:app", host="127.0.0.1", port=8000, log_level="info", reload=True)

@@ -1,20 +1,15 @@
+from datetime import datetime
+from time import strftime
 from typing import List
-
 import psycopg2
-
 from dto import ShopUnitImport, ShopUnitType, ShopUnit
 from config import host, user, password, db_name
 from exceptions import ValidationError, NotFoundError
 
 
-def item_to_unit(item: tuple, dict_of_children: dict()) -> ShopUnit:
-    unit = ShopUnit()
-    unit.id = item[0]
-    unit.name = item[1]
-    unit.parentId = item[2]
-    unit.type = item[4]
-    unit.price = item[3]
-    unit.date = item[5]
+def item_to_unit(item: tuple, dict_of_children: dict) -> ShopUnit:
+    dt_str = item[5].strftime("%Y-%m-%dT%H:%M:%S.000Z")
+    unit = ShopUnit(id=item[0], name=item[1], parentId=item[2], price=item[3], type=item[4], date=dt_str)
     if item[0] in dict_of_children:
         unit.children = list()
         for child in dict_of_children[item[0]]:
@@ -40,6 +35,7 @@ def making_list_children(items: list):
 
 class PostgresDAO:
     def __init__(self):
+        print("initialize dao")
         self.conn = None
         try:
             self.conn = psycopg2.connect(

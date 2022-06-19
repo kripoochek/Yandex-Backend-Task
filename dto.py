@@ -8,22 +8,12 @@ class ShopUnitType(Enum):
     category = 2
 
 
-class ShopUnitChildren:
-    id: str
-    name: str
-    date: str
-    parentId: str
-    type: ShopUnitType
-    price: Optional[int]
-    children: Optional[List["ShopUnitChildren"]]
-
-
 class ShopUnit(BaseModel):
     id: str
     name: str
     date: str
-    parentId: str
-    type: ShopUnitType
+    parentId: Optional[str]
+    type: str
     price: Optional[int]
     children: Optional[List["ShopUnit"]]
 
