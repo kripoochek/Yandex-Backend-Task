@@ -1,57 +1,52 @@
 from datetime import datetime
-from typing import List, Dict, Union
+from typing import List, Dict, Union, Tuple, Optional, Protocol
 from uuid import UUID
 from exceptions import NotFoundError, ValidationError
 from shop_units.dao import DAO
-from dto import ShopUnitImport, ShopUnit
+from dto import ShopUnitImport, ShopUnit, ShopUnitType
 
 
-def is_datetime_valid(dt_str):
-    try:
-        dt_str_new = dt_str.replace('Z', '+00:00')
-        datetime.fromisoformat(dt_str_new)
-    except:
-        return False
-    return True
+def price(unit: ShopUnit) -> Optional[int]:
+    if unit.type == ShopUnitType.OFFER:
+        return unit.price
+    if unit.children is None:
+        return None
+
+    def f(u: ShopUnit) -> Tuple[int, int]:
+        if u.type == ShopUnitType.CATEGORY:
+            total_price, cnt = 0, 0
+            for child in u.children:
+                a, b = f(child)
+                total_price += a
+                cnt += b
+            u.price = total_price // (cnt if cnt != 0 else 1)
+            return total_price, cnt
+        if u.type == ShopUnitType.OFFER:
+            return u.price, 1
+
+    s, count = f(unit)
+    return s // (count if count != 0 else 1)
 
 
-def is_valid_uuid(value):
-    try:
-        UUID(value)
+class ManagerInterface(Protocol):
+    def __init__(self, dao: DAO):
+        pass
 
-        return True
-    except ValueError:
-        return False
+    def delete_node(self, item_id: str):
+        pass
 
+    def get_node(self, item_id: str) -> str:
+        pass
 
-def price_counter(unit: Union["ShopUnit", "ShopUnitChildren"]):
-    if unit.price is not None:
-        return
-    if not hasattr(unit, "children"):
-        return
-    count_children_with_price = 0
-    sum_price = 0
-    for i in range(len(unit.children)):
-        price_counter(unit.children[i])
-        if unit.children[i].price is not None:
-            count_children_with_price += 1
-            sum_price += unit.children[i].price
-    if count_children_with_price != 0:
-        unit.price = sum_price
-
-
-def make_children_dict(children: List["ShopUnit"]):
-    for i in range(len(children)):
-        if hasattr(children[i], "children"):
-            pass
+    def import_nodes(self, items: List[ShopUnitImport], update_date: str):
+        pass
 
 
 class Manager:
     def __init__(self, dao: DAO):
-        print("initialize manager")
         self.dao = dao
 
-    def import_nodes(self, items: List["ShopUnitImport"], update_date: str):
+    def import_nodes(self, items: List[ShopUnitImport], update_date: datetime) -> None:
         items_id = dict()
         for item in items:
             if item.id not in items_id:
@@ -60,29 +55,12 @@ class Manager:
                 items_id[item.id] += 1
             if items_id[item.id] > 1:
                 raise ValidationError
-            if not is_valid_uuid(item.id):
-                raise ValidationError
-            if item.parentId is not None:
-                if not is_valid_uuid(item.parentId):
-                    raise ValidationError
-            if item.type == "CATEGORY" and item.price is not None:
-                raise ValidationError
-            if item.type == "OFFER" and (item.price is None or item.price < 0):
-                raise ValidationError
-            if item.type != "OFFER" and item.type != "CATEGORY":
-                raise ValidationError
-            if not is_datetime_valid(update_date):
-                raise ValidationError
-        self.dao.insert_or_update(items, update_date)
+        self.dao.insert_or_update_nodes(items, update_date)
 
-    def get_node(self, item_id: str) -> ShopUnit:
-        if not is_valid_uuid(item_id):
-            raise ValidationError
-        shop_unit = self.dao.get_item(item_id)
-        price_counter(shop_unit)
+    def get_node(self, item_id: UUID) -> ShopUnit:
+        shop_unit = self.dao.get_node(item_id)
+        price(shop_unit)
         return shop_unit
 
-    def delete_node(self, item_id: str):
-        if not is_valid_uuid(item_id):
-            raise ValidationError
-        self.dao.delete_item(item_id)
+    def delete_node(self, item_id: UUID) -> None:
+        self.dao.delete_node(item_id)

@@ -1,6 +1,3 @@
-from dto import Error
-
-
 class ValidationError(Exception):
     pass
 

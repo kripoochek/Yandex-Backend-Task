@@ -1,4 +1,4 @@
-from shop_units.postgres_dao import PostgresDAO
+from shop_units.dao import PostgresDAO
 from make_shop_import_unit import make_shop_import_unit
 from shop_units.manager import Manager
 from exceptions import ValidationError, NotFoundError

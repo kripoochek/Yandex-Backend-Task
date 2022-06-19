@@ -3,8 +3,7 @@
     {
       "children": [
         {
-          "children": null,
-          "date": "2022-02-03T15:00:00.000Z",
+          "date": "2022-02-03T15:00:00",
           "id": "73bc3b36-02d1-4245-ab35-3106c9ee1c65",
           "name": "Goldstar 65\" LED UHD LOL Very Smart",
           "parentId": "1cc0129a-2bfe-474c-9ee6-d435bf5fc8f2",
@@ -12,8 +11,7 @@
           "type": "OFFER"
         },
         {
-          "children": null,
-          "date": "2022-02-03T12:00:00.000Z",
+          "date": "2022-02-03T12:00:00",
           "id": "74b81fda-9cdc-4b63-8927-c978afed5cf4",
           "name": "Phyllis 50\" LED UHD Smarter",
           "parentId": "1cc0129a-2bfe-474c-9ee6-d435bf5fc8f2",
@@ -21,8 +19,7 @@
           "type": "OFFER"
         },
         {
-          "children": null,
-          "date": "2022-02-03T12:00:00.000Z",
+          "date": "2022-02-03T12:00:00",
           "id": "98883e8f-0507-482f-bce2-2fb306cf6483",
           "name": "Samson 70\" LED UHD Smart",
           "parentId": "1cc0129a-2bfe-474c-9ee6-d435bf5fc8f2",
@@ -30,18 +27,17 @@
           "type": "OFFER"
         }
       ],
-      "date": "2022-02-03T12:00:00.000Z",
+      "date": "2022-02-03T12:00:00",
       "id": "1cc0129a-2bfe-474c-9ee6-d435bf5fc8f2",
       "name": "Телевизоры",
       "parentId": "069cb8d7-bbdd-47d3-ad8f-82ef4c269df1",
-      "price": 152997,
+      "price": 50999,
       "type": "CATEGORY"
     },
     {
       "children": [
         {
-          "children": null,
-          "date": "2022-02-02T12:00:00.000Z",
+          "date": "2022-02-02T12:00:00",
           "id": "863e1a7a-1304-42ae-943b-179184c077e3",
           "name": "jPhone 13",
           "parentId": "d515e43f-f3f6-4471-bb77-6b455017a2d2",
@@ -49,8 +45,7 @@
           "type": "OFFER"
         },
         {
-          "children": null,
-          "date": "2022-02-02T12:00:00.000Z",
+          "date": "2022-02-02T12:00:00",
           "id": "b1d8fd7d-2ae3-47d5-b2f9-0f094af800d4",
           "name": "Xomiа Readme 10",
           "parentId": "d515e43f-f3f6-4471-bb77-6b455017a2d2",
@@ -58,18 +53,18 @@
           "type": "OFFER"
         }
       ],
-      "date": "2022-02-02T12:00:00.000Z",
+      "date": "2022-02-02T12:00:00",
       "id": "d515e43f-f3f6-4471-bb77-6b455017a2d2",
       "name": "Смартфоны",
       "parentId": "069cb8d7-bbdd-47d3-ad8f-82ef4c269df1",
-      "price": 139998,
+      "price": 69999,
       "type": "CATEGORY"
     }
   ],
-  "date": "2022-02-01T12:00:00.000Z",
+  "date": "2022-02-01T12:00:00",
   "id": "069cb8d7-bbdd-47d3-ad8f-82ef4c269df1",
   "name": "Товары",
   "parentId": null,
-  "price": 292995,
+  "price": 58599,
   "type": "CATEGORY"
 }
