@@ -1,9 +1,29 @@
 from datetime import datetime
-from typing import List, Dict, Union, Tuple, Optional, Protocol
+from typing import List, Tuple, Optional, Protocol, Dict
 from uuid import UUID
-from exceptions import NotFoundError, ValidationError
-from shop_units.dao import DAO
-from dto import ShopUnitImport, ShopUnit, ShopUnitType
+from app.exceptions import ValidationError
+from app.shop_units.dao import DAO
+from app.dto import ShopUnitImport, ShopUnit, ShopUnitType
+
+
+def dfs(item: ShopUnitImport, graph: Dict[UUID, List[ShopUnit]], out_time_order: List[UUID], used: Dict[UUID, bool]):
+    if item.id in used:
+        return
+    used[item.id] = True
+    if item.id in graph:
+        for child in graph[item.id]:
+            dfs(child, graph, out_time_order, used)
+    out_time_order.append(item)
+
+
+def right_order_items(items: List[ShopUnitImport], graph: Dict[UUID, List[ShopUnit]]):
+    used = dict()
+    out_time_order = list()
+    for item in items:
+        if item.id in used:
+            continue
+        dfs(item, graph, out_time_order, used)
+    return reversed(out_time_order)
 
 
 def price(unit: ShopUnit) -> Optional[int]:
@@ -44,17 +64,25 @@ class ManagerInterface(Protocol):
 
 class Manager:
     def __init__(self, dao: DAO):
+        # print("MANAGER")
+
         self.dao = dao
 
     def import_nodes(self, items: List[ShopUnitImport], update_date: datetime) -> None:
-        items_id = dict()
+        id_to_item = dict()  # Dict[UUID, ShopUnit]
+        graph = dict()  # Dict[UUID, List[ShopUnit]]
         for item in items:
-            if item.id not in items_id:
-                items_id[item.id] = 1
+            if item.id not in id_to_item:
+                id_to_item[item.id] = item
             else:
-                items_id[item.id] += 1
-            if items_id[item.id] > 1:
                 raise ValidationError
+            if item.parent_id is not None:
+                if item.parent_id not in graph:
+                    graph[item.parent_id] = list()
+                    graph[item.parent_id].append(item)
+                else:
+                    graph[item.parent_id].append(item)
+        items = right_order_items(items, graph)
         self.dao.insert_or_update_nodes(items, update_date)
 
     def get_node(self, item_id: UUID) -> ShopUnit:

@@ -1,7 +1,7 @@
-from shop_units.dao import PostgresDAO
+from app.shop_units.dao import PostgresDAO
 from make_shop_import_unit import make_shop_import_unit
-from shop_units.manager import Manager
-from exceptions import ValidationError, NotFoundError
+from app.shop_units.manager import Manager
+from app.exceptions import ValidationError
 import pytest
 
 postgres_dao = PostgresDAO()

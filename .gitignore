@@ -1,6 +1,6 @@
 *.env
-config.py
 venv
 .pytest_cache
 __pycache__
 .idea
+*.json

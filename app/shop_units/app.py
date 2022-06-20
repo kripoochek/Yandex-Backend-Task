@@ -2,37 +2,14 @@ import json
 from uuid import UUID
 from starlette.requests import Request
 from starlette.responses import Response, JSONResponse
-from dto import ShopUnitRequest, Error
-from shop_units.manager import Manager
-from exceptions import ValidationError, NotFoundError
+from app.dto import ShopUnitRequest, Error
+from app.shop_units.manager import Manager
+from app.exceptions import ValidationError, NotFoundError
 from http import HTTPStatus
 
-"""
-def make_serializable(unit: ShopUnit) -> dict:
-    unit = dict(unit)
-    unit["id"] = str(unit["id"])
-    if unit["parent_id"] is not None:
-        unit["parent_id"] = str(unit["parent_id"])
-    unit["date"] = unit["date"].strftime("%Y-%m-%dT%H:%M:%S.000Z")
-    if "children" in unit:
-        if unit["children"] is not None:
-            for i in range(len(unit["children"])):
-                unit["children"][i] = make_serializable(unit["children"][i])
-    return unit
 
-
-def request_json_to_shop_unit_request(request_js: dict) -> ShopUnitRequest:
-    if ("items" not in request_js) or ("updateDate" not in request_js) or (len(request_js) != 2):
-        raise ValidationError
-    items = list()
-    try:
-        for item in request_js["items"]:
-            items.append(ShopUnitImport.validate(item))
-        shop_unit_request = ShopUnitRequest.validate({"items": items, "updateDate": request_js["updateDate"]})
-    except ValueError:
-        raise ValidationError
-    return shop_unit_request
-"""
+def homepage(request):
+    return JSONResponse(dict('Hello, world!'))
 
 
 class Application:
@@ -41,10 +18,8 @@ class Application:
     """
 
     def __init__(self, manager: Manager):
+        # print("APP")
         self._manager = manager
-
-    def homepage(self, request):
-        return JSONResponse(dict('Hello, world!'))
 
     async def import_nodes(self, request: Request):
         """

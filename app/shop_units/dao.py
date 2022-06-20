@@ -1,22 +1,22 @@
 from datetime import datetime
 from typing import List, Dict, Protocol
 from uuid import UUID
-
-import psycopg2
-from dto import ShopUnitImport, ShopUnit
-from config import host, user, password, db_name
-from exceptions import ValidationError, NotFoundError
+from app.dto import ShopUnitImport, ShopUnit, ShopUnitType
+from app.exceptions import ValidationError, NotFoundError
 import psycopg2.extras
 
 psycopg2.extras.register_uuid()
 
 
 def item_to_unit(item: tuple, children: Dict[UUID, tuple]) -> ShopUnit:
-    unit = ShopUnit(id=item[0], name=item[1], parentId=item[2], price=item[3], type=item[4], date=item[5])
+    dt_str = item[5].strftime("%Y-%m-%dT%H:%M:%S.000Z")
+    unit = ShopUnit(id=item[0], name=item[1], parentId=item[2], price=item[3], type=item[4], date=dt_str)
     if item[0] in children:
         unit.children = list()
         for child in children[item[0]]:
             unit.children.append(item_to_unit(child, children))
+    else:
+        unit.children = None
     return unit
 
 
@@ -67,6 +67,7 @@ class DAO(Protocol):
 
 class PostgresDAO:
     def __init__(self, conn, table_name: str):
+        # print("DAO")
         self._conn = conn
         self._table_name = table_name
 
@@ -81,22 +82,42 @@ class PostgresDAO:
                     if item.parent_id is not None:
                         cursor.execute(
                             """
-                                select * from shop_units where id = %s;
+                                select type from shop_units where id = %s;
                             """,
                             (item.parent_id,)
                         )
-                        if cursor.fetchone()[4] == "OFFER":
+                        parent_type = cursor.fetchall()
+                        if len(parent_type) == 0:
+                            raise ValidationError
+                        if parent_type == ShopUnitType.OFFER:
                             raise ValidationError
                     cursor.execute(
                         """
-                        insert into %s(id, name, parent_id, price, type, update_date)
+                        insert into shop_units(id, name, parent_id, price, type, update_date)
                         values(%s, %s, %s, %s, %s, %s)
                         on conflict (id)
                         do update set name = %s, parent_id = %s, price = %s, type = %s, update_date = %s;
                         """,
                         (
-                            self._table_name, item.id, item.name, item.parent_id, item.price, item.type, update_date,
+                            item.id, item.name, item.parent_id, item.price, item.type, update_date,
                             item.name, item.parent_id, item.price, item.type, update_date)
+                    )
+                    cursor.execute(
+                        """
+                        update shop_units x set update_date = %s from (
+                        with recursive tree as (
+                        select su.id, su.name, su.parent_id, su.price, su.type, su.update_date  from shop_units  su
+                        where su.id = %s
+                        union all
+                        select parent.id, parent.name, parent.parent_id, parent.price, parent.type, parent.update_date 
+                        from shop_units parent, tree
+                         where parent.id = tree.parent_id
+                        ) select id from tree
+                        ) as parents where x.id = parents.id;
+                        """,
+                        (
+                            update_date, item.id
+                        )
                     )
                     self._conn.commit()
         except ValidationError:
@@ -108,7 +129,7 @@ class PostgresDAO:
             cursor.execute(
                 """
                 with recursive tree as (
-                select su.id, su.name, su.parent_id, su.price, su.type, su.update_date  from %s su
+                select su.id, su.name, su.parent_id, su.price, su.type, su.update_date  from shop_units su
                 where su.id = %s
     
                 union all
@@ -117,20 +138,20 @@ class PostgresDAO:
                 where child.parent_id = tree.id
                 ) select * from tree;
                 """,
-                (self._table_name, item_id,)
+                (item_id,)
             )
             items = list(cursor.fetchall())
             if len(items) == 0:
-                raise ValidationError
+                raise NotFoundError
             return making_list_children(items)
 
     def delete_node(self, item_id: UUID):
         with self._conn.cursor() as cursor:
             cursor.execute(
                 """
-                delete from %s where id = %s returning id ;
+                delete from shop_units where id = %s returning id ;
                 """,
-                (self._table_name, item_id,)
+                (item_id,)
             )
             if len(cursor.fetchall()) == 0:
                 raise NotFoundError

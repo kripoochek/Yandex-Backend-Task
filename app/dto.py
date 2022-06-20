@@ -1,11 +1,11 @@
-import datetime
+from datetime import datetime
 from enum import Enum
-from typing import Optional, List
+from typing import Optional, List, Union
 from uuid import UUID
 
 from pydantic import BaseModel, Field, validator
 
-from exceptions import ValidationError
+from app.exceptions import ValidationError
 
 
 class ShopUnitType(str, Enum):
@@ -20,7 +20,7 @@ class AppBaseModel(BaseModel):
     def json(self, **kwargs):
         kwargs.setdefault("by_alias", True)
         kwargs.setdefault("exclude_unset", True)
-        return super().json(**kwargs)
+        return super().json(exclude_none=False, **kwargs)
 
 
 class ShopUnit(AppBaseModel):
@@ -30,7 +30,7 @@ class ShopUnit(AppBaseModel):
     """
     id: UUID
     name: str
-    date: datetime.datetime
+    date: Union[str, datetime]
     parent_id: Optional[UUID] = Field(None, alias="parentId")
     type: ShopUnitType
     price: Optional[int]
@@ -61,7 +61,7 @@ class ShopUnitRequest(AppBaseModel):
     """
     Request for import many shop units.
     """
-    update_date: datetime.datetime = Field(None, alias="updateDate")
+    update_date: datetime = Field(None, alias="updateDate")
     items: List[ShopUnitImport]
 
 
