@@ -39,7 +39,7 @@ class DAO(Protocol):
         DAO represents interface with set of methods to work with shop units storage.
     """
 
-    def insert_or_update_nodes(self, items: List["ShopUnitImport"], update_date: datetime) -> None:
+    def insert_or_update_items(self, items: List["ShopUnitImport"], update_date: datetime) -> None:
         """
         Inserts or updates provided items and updates their update time
         :param items: shop units import data
@@ -48,19 +48,25 @@ class DAO(Protocol):
         """
         pass
 
-    def get_node(self, item_id: UUID) -> ShopUnit:
+    def get_item(self, item_id: UUID) -> ShopUnit:
         """
-        Deletes node and its children recursively.
+        Deletes item and its children recursively.
         :param item_id: uuid shop unit
         :return:
         """
         pass
 
-    def delete_node(self, item_id: UUID):
+    def delete_item(self, item_id: UUID):
         """
-        Deletes node and its children recursively.
+        Deletes item and its children recursively.
         :param item_id uuid shop unit
         :return:
+        """
+        pass
+
+    def get_sales(self, date: datetime):
+        """
+        Get items
         """
         pass
 
@@ -75,7 +81,7 @@ class PostgresDAO:
         if self._conn:
             self._conn.close()
 
-    def insert_or_update_nodes(self, items: List[ShopUnitImport], update_date: datetime):
+    def insert_or_update_items(self, items: List[ShopUnitImport], update_date: datetime):
         try:
             with self._conn.cursor() as cursor:
                 for item in items:
@@ -120,11 +126,11 @@ class PostgresDAO:
                         )
                     )
                     self._conn.commit()
-        except ValidationError:
+        except BaseException:
             self._conn.rollback()
             raise ValidationError
 
-    def get_node(self, item_id: UUID) -> ShopUnit:
+    def get_item(self, item_id: UUID) -> ShopUnit:
         with self._conn.cursor() as cursor:
             cursor.execute(
                 """
@@ -145,7 +151,7 @@ class PostgresDAO:
                 raise NotFoundError
             return making_list_children(items)
 
-    def delete_node(self, item_id: UUID):
+    def delete_item(self, item_id: UUID):
         with self._conn.cursor() as cursor:
             cursor.execute(
                 """
@@ -156,3 +162,21 @@ class PostgresDAO:
             if len(cursor.fetchall()) == 0:
                 raise NotFoundError
             self._conn.commit()
+
+    def get_sales(self, date: datetime):
+        with self._conn.cursor() as cursor:
+            cursor.execute(
+                """
+                select * from shop_units su where (su.type='OFFER' and 
+                ((DATE_PART('day', %s::timestamp - su.update_date::timestamp) * 24 + 
+                DATE_PART('hour', %s::timestamp - su.update_date::timestamp)) * 60 +
+                DATE_PART('minute', %s::timestamp - su.update_date::timestamp)) * 60 +
+                DATE_PART('second', %s::timestamp - su.update_date::timestamp)<=86400 and 
+                ((DATE_PART('day', %s::timestamp - su.update_date::timestamp) * 24 + 
+                DATE_PART('hour', %s::timestamp - su.update_date::timestamp)) * 60 +
+                DATE_PART('minute', %s::timestamp - su.update_date::timestamp)) * 60 +
+                DATE_PART('second', %s::timestamp - su.update_date::timestamp)>=0);
+                """
+                , (date, date, date, date, date, date, date, date)
+            )
+            return list(cursor.fetchall())

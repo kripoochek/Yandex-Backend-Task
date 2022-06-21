@@ -4,7 +4,7 @@ from typing import List
 import psycopg2
 from starlette.applications import Starlette
 from starlette.routing import Route
-from app.shop_units.app import Application, homepage
+from app.shop_units.app import Application
 from app.shop_units.manager import Manager
 from app.shop_units.dao import PostgresDAO, DAO
 
@@ -16,10 +16,10 @@ star_app: Starlette
 def bind_routes(app: Application) -> List[Route]:
     global routes
     routes = [
-        Route('/', homepage, methods=["GET"]),
-        Route('/imports', app.import_nodes, methods=["POST"]),
-        Route('/delete/{item_id}', app.delete_node, methods=["DELETE"]),
-        Route('/nodes/{item_id}', app.get_node, methods=["GET"]),
+        Route('/imports', app.import_items, methods=["POST"]),
+        Route('/delete/{item_id}', app.delete_item, methods=["DELETE"]),
+        Route('/items/{item_id}', app.get_item, methods=["GET"]),
+        Route('/sales',app.get_)
     ]
     return routes
 

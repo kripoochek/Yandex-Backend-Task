@@ -8,10 +8,6 @@ from app.exceptions import ValidationError, NotFoundError
 from http import HTTPStatus
 
 
-def homepage(request):
-    return JSONResponse(dict('Hello, world!'))
-
-
 class Application:
     """
     Application is a top-tree class for application
@@ -21,14 +17,14 @@ class Application:
         # print("APP")
         self._manager = manager
 
-    async def import_nodes(self, request: Request):
+    async def import_items(self, request: Request):
         """
         Save or update shop units, provided from request body.
         """
         try:
             import_request_json = await request.json()
             import_request = ShopUnitRequest.validate(import_request_json)
-            self._manager.import_nodes(import_request.items, import_request.update_date)
+            self._manager.import_items(import_request.items, import_request.update_date)
             return Response()
         except (ValidationError, ValueError) as e:
             error = Error()
@@ -36,13 +32,13 @@ class Application:
             error.message = "Validation Failed"
             return JSONResponse(dict(error), status_code=HTTPStatus.BAD_REQUEST)
 
-    async def delete_node(self, request: Request):
+    async def delete_item(self, request: Request):
         """
-        Removes node and its children recursively.
+        Removes item and its children recursively.
         """
         try:
-            node_id = UUID(request.path_params['item_id'])
-            self._manager.delete_node(node_id)
+            item_id = UUID(request.path_params['item_id'])
+            self._manager.delete_item(item_id)
             return Response()
         except (ValidationError, ValueError) as e:
             error = Error()
@@ -55,14 +51,14 @@ class Application:
             error.message = "Item not found"
             return JSONResponse(dict(error), status_code=HTTPStatus.NOT_FOUND)
 
-    async def get_node(self, request: Request):
+    async def get_item(self, request: Request):
         """
-        Get node and provide its children recursively.
+        Get item and provide its children recursively.
         """
         try:
-            node_id = UUID(request.path_params['item_id'])
-            node = self._manager.get_node(node_id)
-            return JSONResponse(json.loads(node.json()), status_code=200)
+            item_id = UUID(request.path_params['item_id'])
+            item = self._manager.get_item(item_id)
+            return JSONResponse(json.loads(item.json()), status_code=200)
         except (ValidationError, ValueError) as e:
             error = Error()
             error.code = HTTPStatus.BAD_REQUEST
@@ -73,3 +69,9 @@ class Application:
             error.code = HTTPStatus.NOT_FOUND
             error.message = "Item not found"
             return JSONResponse(dict(error), status_code=HTTPStatus.NOT_FOUND)
+
+    async def sales(self, request: Request):
+        try:
+            data_json = await request.json()
+            pass
+            # там походу не body а  query params

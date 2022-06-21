@@ -52,13 +52,16 @@ class ManagerInterface(Protocol):
     def __init__(self, dao: DAO):
         pass
 
-    def delete_node(self, item_id: str):
+    def delete_item(self, item_id: str):
         pass
 
-    def get_node(self, item_id: str) -> str:
+    def get_item(self, item_id: str) -> str:
         pass
 
-    def import_nodes(self, items: List[ShopUnitImport], update_date: str):
+    def import_items(self, items: List[ShopUnitImport], update_date: str):
+        pass
+
+    def get_sales(self, date: datetime) -> List[ShopUnit]:
         pass
 
 
@@ -68,7 +71,7 @@ class Manager:
 
         self.dao = dao
 
-    def import_nodes(self, items: List[ShopUnitImport], update_date: datetime) -> None:
+    def import_items(self, items: List[ShopUnitImport], update_date: datetime) -> None:
         id_to_item = dict()  # Dict[UUID, ShopUnit]
         graph = dict()  # Dict[UUID, List[ShopUnit]]
         for item in items:
@@ -83,12 +86,21 @@ class Manager:
                 else:
                     graph[item.parent_id].append(item)
         items = right_order_items(items, graph)
-        self.dao.insert_or_update_nodes(items, update_date)
+        self.dao.insert_or_update_items(items, update_date)
 
-    def get_node(self, item_id: UUID) -> ShopUnit:
-        shop_unit = self.dao.get_node(item_id)
+    def get_item(self, item_id: UUID) -> ShopUnit:
+        shop_unit = self.dao.get_item(item_id)
         price(shop_unit)
         return shop_unit
 
-    def delete_node(self, item_id: UUID) -> None:
-        self.dao.delete_node(item_id)
+    def delete_item(self, item_id: UUID) -> None:
+        self.dao.delete_item(item_id)
+
+    def get_sales(self, date: datetime) -> List[ShopUnit]:
+        items = self.dao.get_sales(date)
+        for i in range(len(items)):
+            dt_str = items[i][5].strftime("%Y-%m-%dT%H:%M:%S.000Z")
+            items[i] = ShopUnit(id=items[i][0], name=items[i][1], parentId=items[i][2], price=items[i][3],
+                                type=items[i][4],
+                                date=dt_str)
+        return items
