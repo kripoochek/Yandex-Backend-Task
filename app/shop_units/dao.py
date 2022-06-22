@@ -95,7 +95,7 @@ class PostgresDAO:
                         parent_type = cursor.fetchall()
                         if len(parent_type) == 0:
                             raise ValidationError
-                        if parent_type == ShopUnitType.OFFER:
+                        if parent_type[0][0] == ShopUnitType.OFFER:
                             raise ValidationError
                     cursor.execute(
                         """

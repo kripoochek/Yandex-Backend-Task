@@ -3,7 +3,6 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-
 API_BASEURL = "http://localhost:8000"
 IMPORT_BATCHES = [
     {
@@ -35,17 +34,72 @@ IMPORT_BATCHES = [
                 "parentId": "3fa85f64-5717-4562-b3fc-2c963f66a777",
                 "price": None,
                 "type": "CATEGORY"
+            }
+        ],
+        "updateDate": "2022-02-03T15:00:00.000Z"
+    },
+    {
+        "items": [
+            {
+                "id": "3fa85f64-5717-4562-b3fc-2c963f66a444",
+                "name": "4",
+                "parentId": None,
+                "price": None,
+                "type": "CATEGORY"
             },
             {
-                "id": "3fa85f64-5717-4562-b3fc-2c963f66a555",
-                "name": "5",
-                "parentId": "3fa85f64-5717-4562-b3fc-2c963f66a222",
+                "id": "3fa85f64-5717-4562-b3fc-2c963f66a222",
+                "name": "2",
+                "parentId": "3fa85f64-5717-4562-b3fc-2c963f66a111",
+                "price": None,
+                "type": "CATEGORY"
+            },
+            {
+                "id": "3fa85f64-5717-4562-b3fc-2c963f66a333",
+                "name": "3",
+                "parentId": "3fa85f64-5717-4562-b3fc-2c963f66a111",
+                "price": None,
+                "type": "CATEGORY"
+            },
+            {
+                "id": "3fa85f64-5717-4562-b3fc-2c963f66a111",
+                "name": "1",
+                "parentId": None,
+                "price": None,
+                "type": "CATEGORY"
+            },
+            {
+                "id": "3fa85f64-5717-4562-b3fc-2c963f66a777",
+                "name": "7",
+                "parentId": "3fa85f64-5717-4562-b3fc-2c963f66a666",
+                "price": None,
+                "type": "CATEGORY"
+            },
+            {
+                "id": "3fa85f64-5717-4562-b3fc-2c963f66a666",
+                "name": "6",
+                "parentId": None,
+                "price": None,
+                "type": "CATEGORY"
+            },
+            {
+                "id": "3fa85f64-5717-4562-b3fc-2c963f66a888",
+                "name": "8",
+                "parentId": "3fa85f64-5717-4562-b3fc-2c963f66a666",
+                "price": None,
+                "type": "CATEGORY"
+            },
+            {
+                "id": "3fa85f64-5717-4562-b3fc-2c963f66a999",
+                "name": "9",
+                "parentId": "3fa85f64-5717-4562-b3fc-2c963f66a777",
                 "price": None,
                 "type": "CATEGORY"
             }
         ],
         "updateDate": "2022-02-03T15:00:00.000Z"
     }
+
 ]
 
 

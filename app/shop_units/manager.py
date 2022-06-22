@@ -1,3 +1,4 @@
+import json
 from datetime import datetime
 from typing import List, Tuple, Optional, Protocol, Dict
 from uuid import UUID
@@ -33,19 +34,28 @@ def price(unit: ShopUnit) -> Optional[int]:
         return None
 
     def f(u: ShopUnit) -> Tuple[int, int]:
+        """
+        calculate the total price and count them in the category
+        """
         if u.type == ShopUnitType.CATEGORY:
             total_price, cnt = 0, 0
-            for child in u.children:
-                a, b = f(child)
-                total_price += a
-                cnt += b
-            u.price = total_price // (cnt if cnt != 0 else 1)
+            if u.children is not None:
+                for child in u.children:
+                    a, b = f(child)
+                    total_price += a
+                    cnt += b
+            if cnt == 0:
+                u.price = None
+            else:
+                u.price = total_price // cnt
             return total_price, cnt
         if u.type == ShopUnitType.OFFER:
             return u.price, 1
 
     s, count = f(unit)
-    return s // (count if count != 0 else 1)
+    if count == 0:
+        return None
+    return s // count
 
 
 class ManagerInterface(Protocol):
@@ -90,8 +100,8 @@ class Manager:
 
     def get_item(self, item_id: UUID) -> ShopUnit:
         shop_unit = self.dao.get_item(item_id)
-        price(shop_unit)
-        return shop_unit
+        shop_unit.price = price(shop_unit)
+        return json.loads(shop_unit.json())
 
     def delete_item(self, item_id: UUID) -> None:
         self.dao.delete_item(item_id)
@@ -103,4 +113,5 @@ class Manager:
             items[i] = ShopUnit(id=items[i][0], name=items[i][1], parentId=items[i][2], price=items[i][3],
                                 type=items[i][4],
                                 date=dt_str)
+            items[i] = json.loads(items[i].json())
         return items

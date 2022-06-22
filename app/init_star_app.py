@@ -18,8 +18,8 @@ def bind_routes(app: Application) -> List[Route]:
     routes = [
         Route('/imports', app.import_items, methods=["POST"]),
         Route('/delete/{item_id}', app.delete_item, methods=["DELETE"]),
-        Route('/items/{item_id}', app.get_item, methods=["GET"]),
-        Route('/sales',app.get_)
+        Route('/nodes/{item_id}', app.get_item, methods=["GET"]),
+        Route('/sales', app.sales, methods=["GET"])
     ]
     return routes
 

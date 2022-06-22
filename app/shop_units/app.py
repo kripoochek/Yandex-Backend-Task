@@ -2,7 +2,7 @@ import json
 from uuid import UUID
 from starlette.requests import Request
 from starlette.responses import Response, JSONResponse
-from app.dto import ShopUnitRequest, Error
+from app.dto import ShopUnitRequest, Error, DateRequest
 from app.shop_units.manager import Manager
 from app.exceptions import ValidationError, NotFoundError
 from http import HTTPStatus
@@ -58,7 +58,7 @@ class Application:
         try:
             item_id = UUID(request.path_params['item_id'])
             item = self._manager.get_item(item_id)
-            return JSONResponse(json.loads(item.json()), status_code=200)
+            return JSONResponse(item, status_code=200)
         except (ValidationError, ValueError) as e:
             error = Error()
             error.code = HTTPStatus.BAD_REQUEST
@@ -72,6 +72,13 @@ class Application:
 
     async def sales(self, request: Request):
         try:
-            data_json = await request.json()
-            pass
-            # там походу не body а  query params
+            date = request.query_params['date']
+            date = {"date": date}
+            date_request = DateRequest.validate(date)
+            items = self._manager.get_sales(date_request.date)
+            return JSONResponse(items, status_code=200)
+        except ValidationError:
+            error = Error()
+            error.code = HTTPStatus.BAD_REQUEST
+            error.message = "Validation Failed"
+            return JSONResponse(dict(error), status_code=HTTPStatus.BAD_REQUEST)

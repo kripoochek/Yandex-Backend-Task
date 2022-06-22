@@ -23,6 +23,10 @@ class AppBaseModel(BaseModel):
         return super().json(exclude_none=False, **kwargs)
 
 
+class DateRequest(BaseModel):
+    date: datetime
+
+
 class ShopUnit(AppBaseModel):
     """
     Common shop unit model.

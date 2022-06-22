@@ -18,12 +18,12 @@ dao = PostgresDAO(conn, "shop_units")
 
 def test_not_found_delete():
     with pytest.raises(NotFoundError):
-        dao.delete_item("3fa85f64-5717-4562-b3fc-2c963f66a333")
+        dao.delete_item("3aa85f64-5717-4562-b3fc-2c963f66a333")
 
 
 def test_not_found_get():
     with pytest.raises(NotFoundError):
-        dao.get_item("3fa85f64-5717-4562-b3fc-2c963f66a333")
+        dao.get_item("3aa85f64-5717-4562-b3fc-2c963f66a333")
 
 
 # проверка того что мы не можем сменить тип товара при обновлении
