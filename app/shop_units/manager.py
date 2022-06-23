@@ -77,7 +77,7 @@ class ManagerInterface(Protocol):
 
 class Manager:
     def __init__(self, dao: DAO):
-        # print("MANAGER")
+        print("MANAGER")
 
         self.dao = dao
 

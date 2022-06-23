@@ -23,18 +23,8 @@ def bind_routes(app: Application) -> List[Route]:
     ]
     return routes
 
-
-def startup():
-    pass
-
-
 def initialize():
-    conn = psycopg2.connect(
-        host=os.environ["host"],
-        user=os.environ["username"],
-        password=os.environ["password"],
-        database=os.environ["db_name"]
-    )
+    conn = psycopg2.connect(dsn=os.environ["PG_ADDRESS"])
     dao: DAO = PostgresDAO(conn, 'shop_units')
     manager = Manager(dao)
     app = Application(manager)
@@ -42,4 +32,3 @@ def initialize():
 
 
 initialize()
-star_app = Starlette(debug=True, routes=routes, on_startup=[startup])
