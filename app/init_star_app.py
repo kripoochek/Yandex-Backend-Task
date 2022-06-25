@@ -4,9 +4,12 @@ from typing import List
 import psycopg2
 from starlette.applications import Starlette
 from starlette.routing import Route
+from yoyo.migrations import Migration
+
 from app.shop_units.app import Application
 from app.shop_units.manager import Manager
 from app.shop_units.dao import PostgresDAO, DAO
+from yoyo import read_migrations
 
 load_dotenv()
 routes = []
@@ -25,8 +28,17 @@ def bind_routes(app: Application) -> List[Route]:
     return routes
 
 
+def migration_up(connection):
+    migrations = read_migrations('../db/migrations/')
+    with connection.cursor() as cursor:
+        for migration in migrations.items:
+            source = migration.source
+            cursor.execute(source)
+
+
 def initialize():
     conn = psycopg2.connect(dsn=os.environ["PG_ADDRESS"])
+    migration_up(conn)
     dao: DAO = PostgresDAO(conn, 'shop_units')
     manager = Manager(dao)
     app = Application(manager)
@@ -34,4 +46,3 @@ def initialize():
 
 
 initialize()
-star_app = Starlette(debug=True, routes=routes)

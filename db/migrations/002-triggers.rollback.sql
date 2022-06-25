@@ -1,0 +1,1 @@
+DROP TRIGGER [IF EXISTS] prevent_type_change ON public.shop_units;
