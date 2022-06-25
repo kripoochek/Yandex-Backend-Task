@@ -19,9 +19,11 @@ def bind_routes(app: Application) -> List[Route]:
         Route('/imports', app.import_items, methods=["POST"]),
         Route('/delete/{item_id}', app.delete_item, methods=["DELETE"]),
         Route('/nodes/{item_id}', app.get_item, methods=["GET"]),
-        Route('/sales', app.sales, methods=["GET"])
+        Route('/sales', app.sales, methods=["GET"]),
+        Route('/node/{item_id}/statistic', app.get_statistic, methods=["GET"])
     ]
     return routes
+
 
 def initialize():
     conn = psycopg2.connect(dsn=os.environ["PG_ADDRESS"])
@@ -32,3 +34,4 @@ def initialize():
 
 
 initialize()
+star_app = Starlette(debug=True, routes=routes)

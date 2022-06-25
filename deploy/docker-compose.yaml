@@ -1,4 +1,4 @@
-version: '2'
+version: '3.4'
 
 services:
   database:
@@ -6,9 +6,26 @@ services:
     container_name: "postgres"
     ports:
       - "5432:5432"
+    volumes:
+      - /var/lib/postgresql/data
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
     restart: always
-    
+  megamarket:
+    image: 79994956290/mega_market
+    command: uvicorn --host '0.0.0.0' --port 80 app.init_star_app:star_app
+    ports:
+      - "80:80"
+    environment:
+      PG_ADDRESS: "host=postgres port=5432 user=${POSTGRES_USER} dbname=${POSTGRES_DB} password=${POSTGRES_PASSWORD}"
+    depends_on:
+      - database
+    restart: always

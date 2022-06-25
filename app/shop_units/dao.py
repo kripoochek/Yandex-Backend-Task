@@ -1,11 +1,55 @@
 from datetime import datetime
-from typing import List, Dict, Protocol
+from typing import List, Dict, Protocol, Tuple
 from uuid import UUID
 from app.dto import ShopUnitImport, ShopUnit, ShopUnitType
 from app.exceptions import ValidationError, NotFoundError
 import psycopg2.extras
 
 psycopg2.extras.register_uuid()
+
+start_script = """create type unit_type AS ENUM ('OFFER', 'CATEGORY');
+create table if not exists public.shop_units (
+id UUID not null,
+name text not null,
+parent_id UUID null,
+price int null,
+type unit_type,
+update_date timestamp without time zone ,
+primary key(id)
+);
+create table if not exists public.statistic_shop_units (
+id UUID not null,
+name text not null,
+parent_id UUID null,
+price int null,
+type unit_type,
+update_date timestamp without time zone
+);
+alter table public.statistic_shop_units add constraint fk_statistic foreign key(id) references shop_units(id) on delete cascade;
+alter table public.shop_units add constraint fk_parent_category foreign key(parent_id) references shop_units(id) on delete cascade;
+-- trigger to prevent changing shop unit type.
+create or replace function prevent_type_change() returns trigger as $prevent_type_change$
+begin
+  if old.type != new.type then
+    raise exception 'change type is not allowed';
+  end if;
+
+  if old.type = 'OFFER' and new.price is null then
+    raise exception 'offer must have price';
+  end if;
+
+  if old.type = 'CATEGORY' and new.price is not null then
+    raise exception 'category must have null price';
+  end if;
+  if old.type = 'OFFER' and new.price<0 then
+    raise exception 'OFFER price must be positiv';
+  end if;
+  return new;
+end;
+$prevent_type_change$ language plpgsql;
+
+create trigger prevent_type_change before update on public.shop_units
+for each row execute procedure prevent_type_change();"""
 
 
 def item_to_unit(item: tuple, children: Dict[UUID, tuple]) -> ShopUnit:
@@ -70,12 +114,20 @@ class DAO(Protocol):
         """
         pass
 
+    def get_statistic(self, item_id: UUID, date_start: datetime, date_end: datetime):
+        """
+        Get statistic between dateStart and dateEnd
+        """
+        pass
+
 
 class PostgresDAO:
     def __init__(self, conn, table_name: str):
-        # print("DAO")
         self._conn = conn
         self._table_name = table_name
+        self._script = start_script
+        with self._conn.cursor() as cursor:
+            cursor.execute(self._script)
 
     def __del__(self):
         if self._conn:
@@ -107,6 +159,17 @@ class PostgresDAO:
                         (
                             item.id, item.name, item.parent_id, item.price, item.type, update_date,
                             item.name, item.parent_id, item.price, item.type, update_date)
+                    )
+                    cursor.execute(
+                        """
+                        SELECT * FROM information_schema.tables;;
+                        """
+                    )
+                    cursor.execute(
+                        """
+                         insert into statistic_shop_units(id, name, parent_id, price, type, update_date)
+                        values(%s, %s, %s, %s, %s, %s)
+                        """, (item.id, item.name, item.parent_id, item.price, item.type, update_date)
                     )
                     cursor.execute(
                         """
@@ -163,7 +226,7 @@ class PostgresDAO:
                 raise NotFoundError
             self._conn.commit()
 
-    def get_sales(self, date: datetime):
+    def get_sales(self, date: datetime) -> List[Tuple]:
         with self._conn.cursor() as cursor:
             cursor.execute(
                 """
@@ -179,4 +242,14 @@ class PostgresDAO:
                 """
                 , (date, date, date, date, date, date, date, date)
             )
+            return list(cursor.fetchall())
+
+    def get_statistic(self, item_id: UUID, date_start: datetime, date_end: datetime) -> List[Tuple]:
+        with self._conn.cursor() as cursor:
+            cursor.execute(
+                """select * from statistic_shop_units su where (su.id=%s and su.update_date>=%s and 
+                su.update_date<=%s); """, (item_id, date_start, date_end)
+            )
+            if len(cursor.fetchall()) == 0:
+                raise NotFoundError
             return list(cursor.fetchall())

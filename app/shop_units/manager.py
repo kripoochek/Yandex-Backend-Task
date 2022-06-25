@@ -7,7 +7,8 @@ from app.shop_units.dao import DAO
 from app.dto import ShopUnitImport, ShopUnit, ShopUnitType
 
 
-def dfs(item: ShopUnitImport, graph: Dict[UUID, List[ShopUnit]], out_time_order: List[UUID], used: Dict[UUID, bool]):
+def dfs(item: ShopUnitImport, graph: Dict[UUID, List[ShopUnitImport]], out_time_order: List[ShopUnitImport],
+        used: Dict[UUID, bool]):
     if item.id in used:
         return
     used[item.id] = True
@@ -58,32 +59,15 @@ def price(unit: ShopUnit) -> Optional[int]:
     return s // count
 
 
-class ManagerInterface(Protocol):
-    def __init__(self, dao: DAO):
-        pass
-
-    def delete_item(self, item_id: str):
-        pass
-
-    def get_item(self, item_id: str) -> str:
-        pass
-
-    def import_items(self, items: List[ShopUnitImport], update_date: str):
-        pass
-
-    def get_sales(self, date: datetime) -> List[ShopUnit]:
-        pass
-
-
 class Manager:
     def __init__(self, dao: DAO):
-        print("MANAGER")
+        #print("MANAGER")
 
         self.dao = dao
 
     def import_items(self, items: List[ShopUnitImport], update_date: datetime) -> None:
-        id_to_item = dict()  # Dict[UUID, ShopUnit]
-        graph = dict()  # Dict[UUID, List[ShopUnit]]
+        id_to_item: Dict[UUID, ShopUnitImport] = dict()
+        graph: Dict[UUID, List[ShopUnitImport]] = dict()
         for item in items:
             if item.id not in id_to_item:
                 id_to_item[item.id] = item
@@ -101,13 +85,23 @@ class Manager:
     def get_item(self, item_id: UUID) -> ShopUnit:
         shop_unit = self.dao.get_item(item_id)
         shop_unit.price = price(shop_unit)
-        return json.loads(shop_unit.json())
+        return shop_unit
 
     def delete_item(self, item_id: UUID) -> None:
         self.dao.delete_item(item_id)
 
-    def get_sales(self, date: datetime) -> List[ShopUnit]:
+    def get_sales(self, date: datetime) -> Dict:
         items = self.dao.get_sales(date)
+        for i in range(len(items)):
+            dt_str = items[i][5].strftime("%Y-%m-%dT%H:%M:%S.000Z")
+            items[i] = ShopUnit(id=items[i][0], name=items[i][1], parentId=items[i][2], price=items[i][3],
+                                type=items[i][4],
+                                date=dt_str)
+            items[i] = json.loads(items[i].json())
+        return items
+
+    def statistic(self, item_id: UUID, date_start: datetime, date_end: datetime):
+        items = self.dao.get_statistic(item_id, date_start, date_end)
         for i in range(len(items)):
             dt_str = items[i][5].strftime("%Y-%m-%dT%H:%M:%S.000Z")
             items[i] = ShopUnit(id=items[i][0], name=items[i][1], parentId=items[i][2], price=items[i][3],

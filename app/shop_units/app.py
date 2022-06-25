@@ -2,10 +2,17 @@ import json
 from uuid import UUID
 from starlette.requests import Request
 from starlette.responses import Response, JSONResponse
-from app.dto import ShopUnitRequest, Error, DateRequest
+from app.dto import ShopUnitRequest, Error, DateRequest, ShopUnit
 from app.shop_units.manager import Manager
 from app.exceptions import ValidationError, NotFoundError
 from http import HTTPStatus
+
+
+def make_error(code: int, message: str) -> JSONResponse:
+    error = Error()
+    error.code = code
+    error.message = message
+    return JSONResponse(dict(error), status_code=code)
 
 
 class Application:
@@ -26,11 +33,8 @@ class Application:
             import_request = ShopUnitRequest.validate(import_request_json)
             self._manager.import_items(import_request.items, import_request.update_date)
             return Response()
-        except (ValidationError, ValueError) as e:
-            error = Error()
-            error.code = HTTPStatus.BAD_REQUEST
-            error.message = "Validation Failed"
-            return JSONResponse(dict(error), status_code=HTTPStatus.BAD_REQUEST)
+        except (ValidationError, ValueError):
+            return make_error(HTTPStatus.BAD_REQUEST, "Validation Failed")
 
     async def delete_item(self, request: Request):
         """
@@ -40,16 +44,10 @@ class Application:
             item_id = UUID(request.path_params['item_id'])
             self._manager.delete_item(item_id)
             return Response()
-        except (ValidationError, ValueError) as e:
-            error = Error()
-            error.code = HTTPStatus.BAD_REQUEST
-            error.message = "Validation Failed"
-            return JSONResponse(dict(error), status_code=HTTPStatus.BAD_REQUEST)
+        except (ValidationError, ValueError):
+            return make_error(HTTPStatus.BAD_REQUEST, "Validation Failed")
         except NotFoundError:
-            error = Error()
-            error.code = HTTPStatus.NOT_FOUND
-            error.message = "Item not found"
-            return JSONResponse(dict(error), status_code=HTTPStatus.NOT_FOUND)
+            return make_error(HTTPStatus.NOT_FOUND, "Item not found")
 
     async def get_item(self, request: Request):
         """
@@ -58,27 +56,34 @@ class Application:
         try:
             item_id = UUID(request.path_params['item_id'])
             item = self._manager.get_item(item_id)
-            return JSONResponse(item, status_code=200)
-        except (ValidationError, ValueError) as e:
-            error = Error()
-            error.code = HTTPStatus.BAD_REQUEST
-            error.message = "Validation Failed"
-            return JSONResponse(dict(error), status_code=HTTPStatus.BAD_REQUEST)
+            return JSONResponse(json.loads(item.json()), status_code=200)
+        except (ValidationError, ValueError):
+            return make_error(HTTPStatus.BAD_REQUEST, "Validation Failed")
         except NotFoundError:
-            error = Error()
-            error.code = HTTPStatus.NOT_FOUND
-            error.message = "Item not found"
-            return JSONResponse(dict(error), status_code=HTTPStatus.NOT_FOUND)
+            return make_error(HTTPStatus.NOT_FOUND, "Item not found")
 
     async def sales(self, request: Request):
         try:
             date = request.query_params['date']
             date = {"date": date}
-            date_request = DateRequest.validate(date)
-            items = self._manager.get_sales(date_request.date)
+            date = DateRequest.validate(date).date
+            items = self._manager.get_sales(date)
             return JSONResponse(items, status_code=200)
         except ValidationError:
-            error = Error()
-            error.code = HTTPStatus.BAD_REQUEST
-            error.message = "Validation Failed"
-            return JSONResponse(dict(error), status_code=HTTPStatus.BAD_REQUEST)
+            return make_error(HTTPStatus.BAD_REQUEST, "Validation Failed")
+
+    async def get_statistic(self, request: Request):
+        try:
+            item_id = UUID(request.path_params['item_id'])
+            date_start = request.query_params['dateStart']
+            date_start = {"date": date_start}
+            date_start = DateRequest.validate(date_start).date
+            date_end = request.query_params['dateEnd']
+            date_end = {"date": date_end}
+            date_end = DateRequest.validate(date_end).date
+            items = self._manager.statistic(item_id, date_start, date_end)
+            return JSONResponse(items, status_code=200)
+        except (ValidationError, ValueError):
+            return make_error(HTTPStatus.BAD_REQUEST, "Validation Failed")
+        except NotFoundError:
+            return make_error(HTTPStatus.NOT_FOUND, "Item not found")
