@@ -52,7 +52,7 @@ PG_ADDRESS='host={hostname} port={port} user={username} dbname={db name} passwor
 PG_DSN='postgres://{username}:{password}@{hostname}:{port}/{db name}'
 ```
 ## Тестирование
-В дириктории test/ лежат тесты.
+В дириктории test/ с префиксом в названии  test_ лежат интеграционные тесты.
 
 Для запуска требуется:
 1. Указать адрес по которому запущен сервис в значение переменной API_BASEURL.
