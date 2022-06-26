@@ -16,6 +16,12 @@
 - Data validation and settings management: pydantic
 - Python testing tool: pytest
 ## Реализованные возможности
+### Методы 
+- POST /imports
+- DELETE /delete/{id}
+- GET /nodes/{id}
+- GET /sales
+- GET /node/{id}/statistic
 ## Запуск
 По заданию требовалось развертывать сервис в контейнере,но есть возможность запустить без контейнера.
 ### Запуск в контейнере
@@ -45,3 +51,11 @@ POSTGRES_PASSWORD="{password}"
 PG_ADDRESS='host={hostname} port={port} user={username} dbname={db name} password={password}'
 PG_DSN='postgres://{username}:{password}@{hostname}:{port}/{db name}'
 ```
+## Тестирование
+В дириктории test/ лежат тесты.
+
+Для запуска требуется:
+1. Указать адрес по которому запущен сервис в значение переменной API_BASEURL.
+2. Затем вызвать команду pytest test/
+
+

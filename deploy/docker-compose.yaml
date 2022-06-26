@@ -11,6 +11,8 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - ./postgres-data:/var/lib/postgresql/data
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U postgres" ]
       interval: 10s
@@ -20,7 +22,7 @@ services:
     restart: always
 
   megamarket:
-    image:  9dd1654091da
+    image: 79994956290/mega_market_image
     command: python3 main.py
     ports:
       - '80:80'
