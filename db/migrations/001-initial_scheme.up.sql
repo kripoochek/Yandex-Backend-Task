@@ -1,3 +1,14 @@
+create type unit_type AS ENUM ('OFFER', 'CATEGORY');
+create table if not exists public.shop_units (
+id UUID not null,
+name text not null,
+parent_id UUID null,
+price int null,
+type unit_type,
+update_date timestamp without time zone ,
+primary key(id)
+);
+alter table public.shop_units add constraint fk_parent_category foreign key(parent_id) references shop_units(id) on delete cascade;
 -- trigger to prevent changing shop unit type.
 create or replace function prevent_type_change() returns trigger as $prevent_type_change$
 begin
@@ -29,3 +40,4 @@ price int null,
 type unit_type,
 update_date timestamp without time zone
 );
+alter table public.statistic_shop_units add constraint fk_statistic foreign key(id) references shop_units(id) on delete cascade;

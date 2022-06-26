@@ -20,12 +20,13 @@ services:
     restart: always
 
   megamarket:
-    image: 79994956290/my_image
+    image:  9dd1654091da
     command: python3 main.py
     ports:
-      - '80:80'
+      - '8000:8000'
     environment:
       PG_ADDRESS: 'host=postgres port=5432 user=${POSTGRES_USER} dbname=${POSTGRES_DB} password=${POSTGRES_PASSWORD}'
+      PG_DSN: 'postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}'
     depends_on:
       - database
     restart: always
