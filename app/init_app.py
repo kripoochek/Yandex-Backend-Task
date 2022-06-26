@@ -14,14 +14,14 @@ routes = []
 star_app: Starlette
 
 
-def bind_routes(app: Application) -> List[Route]:
+def bind_routes(application: Application) -> List[Route]:
     global routes
     routes = [
-        Route('/imports', app.import_items, methods=["POST"]),
-        Route('/delete/{item_id}', app.delete_item, methods=["DELETE"]),
-        Route('/nodes/{item_id}', app.get_item, methods=["GET"]),
-        Route('/sales', app.sales, methods=["GET"]),
-        Route('/node/{item_id}/statistic', app.get_statistic, methods=["GET"])
+        Route('/imports', application.import_items, methods=["POST"]),
+        Route('/delete/{item_id}', application.delete_item, methods=["DELETE"]),
+        Route('/nodes/{item_id}', application.get_item, methods=["GET"]),
+        Route('/sales', application.sales, methods=["GET"]),
+        Route('/node/{item_id}/statistic', application.get_statistic, methods=["GET"])
     ]
     return routes
 

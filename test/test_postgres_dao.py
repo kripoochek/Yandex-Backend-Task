@@ -5,7 +5,7 @@ from app.exceptions import ValidationError, NotFoundError
 import pytest
 from app.dto import ShopUnitImport
 from dotenv import load_dotenv
-
+"""
 load_dotenv()
 conn = psycopg2.connect(
     host=os.environ["host"],
@@ -90,3 +90,4 @@ def test_get_item():
 def test_delete_item(delete_id):
     with pytest.raises(NotFoundError):
         dao.delete_item(delete_id)
+"""

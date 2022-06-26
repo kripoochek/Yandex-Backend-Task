@@ -2,7 +2,7 @@ import json
 from uuid import UUID
 from starlette.requests import Request
 from starlette.responses import Response, JSONResponse
-from app.dto import ShopUnitRequest, Error, DateRequest, ShopUnit
+from app.dto import ShopUnitRequest, Error, DateRequest
 from app.shop_units.manager import Manager
 from app.exceptions import ValidationError, NotFoundError
 from http import HTTPStatus
@@ -21,7 +21,6 @@ class Application:
     """
 
     def __init__(self, manager: Manager):
-        # print("APP")
         self._manager = manager
 
     async def import_items(self, request: Request):
@@ -31,6 +30,8 @@ class Application:
         try:
             import_request_json = await request.json()
             import_request = ShopUnitRequest.validate(import_request_json)
+            date_test = {"date": import_request.update_date}
+            DateRequest.validate(date_test)
             self._manager.import_items(import_request.items, import_request.update_date)
             return Response()
         except (ValidationError, ValueError):
@@ -63,6 +64,10 @@ class Application:
             return make_error(HTTPStatus.NOT_FOUND, "Item not found")
 
     async def sales(self, request: Request):
+        """
+        Getting a list of products
+        whose price has been updated in the last 24 hours from the time passed in the request.
+        """
         try:
             date = request.query_params['date']
             date = {"date": date}
@@ -73,6 +78,10 @@ class Application:
             return make_error(HTTPStatus.BAD_REQUEST, "Validation Failed")
 
     async def get_statistic(self, request: Request):
+        """
+        Obtaining statistics (history of updates) on the price of a product(provided from path params)
+        for a given interval provided from query_params.
+        """
         try:
             item_id = UUID(request.path_params['item_id'])
             date_start = request.query_params['dateStart']

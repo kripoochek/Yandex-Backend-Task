@@ -14,6 +14,7 @@
 - ASGI web server implementation for Python: uvicorn
 - Database schema migration tool: yoyo-migrations
 - Data validation and settings management: pydantic
+- Python testing tool: pytest
 ## Реализованные возможности
 ## Запуск
 По заданию требовалось развертывать сервис в контейнере,но есть возможность запустить без контейнера.

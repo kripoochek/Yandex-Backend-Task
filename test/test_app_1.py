@@ -3,41 +3,11 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-API_BASEURL = "http://localhost:8000"
+"https://history-1816.usr.yandex-academy.ru"
+API_BASEURL = "https://history-1816.usr.yandex-academy.ru"
+"""Тестирование произвольного порядка в запросе.
+Перед тем как добавлять предмет в БД важно проверить что родитель предмета,если таковой имеется,уже добавлен."""
 IMPORT_BATCHES = [
-    {
-        "items": [
-            {
-                "id": "3fa85f64-5717-4562-b3fc-2c963f66a777",
-                "name": "7",
-                "parentId": "3fa85f64-5717-4562-b3fc-2c963f66a666",
-                "price": None,
-                "type": "CATEGORY"
-            },
-            {
-                "id": "3fa85f64-5717-4562-b3fc-2c963f66a666",
-                "name": "6",
-                "parentId": None,
-                "price": None,
-                "type": "CATEGORY"
-            },
-            {
-                "id": "3fa85f64-5717-4562-b3fc-2c963f66a888",
-                "name": "8",
-                "parentId": "3fa85f64-5717-4562-b3fc-2c963f66a666",
-                "price": None,
-                "type": "CATEGORY"
-            },
-            {
-                "id": "3fa85f64-5717-4562-b3fc-2c963f66a999",
-                "name": "9",
-                "parentId": "3fa85f64-5717-4562-b3fc-2c963f66a777",
-                "price": None,
-                "type": "CATEGORY"
-            }
-        ],
-        "updateDate": "2022-02-03T15:00:00.000Z"
-    },
     {
         "items": [
             {
@@ -99,8 +69,9 @@ IMPORT_BATCHES = [
         ],
         "updateDate": "2022-02-03T15:00:00.000Z"
     }
-
 ]
+DELETE_ID = ["3fa85f64-5717-4562-b3fc-2c963f66a111", "3fa85f64-5717-4562-b3fc-2c963f66a666",
+             "3fa85f64-5717-4562-b3fc-2c963f66a444"]
 
 
 def request(path, method="GET", data=None, json_response=False):
@@ -136,3 +107,11 @@ def test_import():
         assert status == 200, f"Expected HTTP status code 200, got {status}"
 
     print("Test import passed.")
+
+
+def test_delete():
+    for index, del_id in enumerate(DELETE_ID):
+        status, _ = request(f"/delete/{del_id}", method="DELETE")
+
+        assert status == 200, f"Expected HTTP status code 200, got {status}"
+

@@ -23,7 +23,7 @@ services:
     image:  9dd1654091da
     command: python3 main.py
     ports:
-      - '8000:8000'
+      - '80:80'
     environment:
       PG_ADDRESS: 'host=postgres port=5432 user=${POSTGRES_USER} dbname=${POSTGRES_DB} password=${POSTGRES_PASSWORD}'
       PG_DSN: 'postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}'

@@ -9,6 +9,9 @@ from app.dto import ShopUnitImport, ShopUnit, ShopUnitType
 
 def dfs(item: ShopUnitImport, graph: Dict[UUID, List[ShopUnitImport]], out_time_order: List[ShopUnitImport],
         used: Dict[UUID, bool]):
+    """
+    dfs with out_time_array
+    """
     if item.id in used:
         return
     used[item.id] = True
@@ -19,6 +22,9 @@ def dfs(item: ShopUnitImport, graph: Dict[UUID, List[ShopUnitImport]], out_time_
 
 
 def right_order_items(items: List[ShopUnitImport], graph: Dict[UUID, List[ShopUnit]]):
+    """
+    topsort
+    """
     used = dict()
     out_time_order = list()
     for item in items:
@@ -61,19 +67,21 @@ def price(unit: ShopUnit) -> Optional[int]:
 
 class Manager:
     def __init__(self, dao: DAO):
-        #print("MANAGER")
-
         self.dao = dao
 
     def import_items(self, items: List[ShopUnitImport], update_date: datetime) -> None:
         id_to_item: Dict[UUID, ShopUnitImport] = dict()
         graph: Dict[UUID, List[ShopUnitImport]] = dict()
         for item in items:
+            """checked that request hasn't 2 same id's"""
             if item.id not in id_to_item:
                 id_to_item[item.id] = item
             else:
                 raise ValidationError
             if item.parent_id is not None:
+                """
+                make directed graph
+                """
                 if item.parent_id not in graph:
                     graph[item.parent_id] = list()
                     graph[item.parent_id].append(item)
@@ -84,6 +92,7 @@ class Manager:
 
     def get_item(self, item_id: UUID) -> ShopUnit:
         shop_unit = self.dao.get_item(item_id)
+        """count price for unit"""
         shop_unit.price = price(shop_unit)
         return shop_unit
 
@@ -92,6 +101,9 @@ class Manager:
 
     def get_sales(self, date: datetime) -> Dict:
         items = self.dao.get_sales(date)
+        """
+        List[tuple] to List[ShopUnit]
+        """
         for i in range(len(items)):
             dt_str = items[i][5].strftime("%Y-%m-%dT%H:%M:%S.000Z")
             items[i] = ShopUnit(id=items[i][0], name=items[i][1], parentId=items[i][2], price=items[i][3],
@@ -102,6 +114,9 @@ class Manager:
 
     def statistic(self, item_id: UUID, date_start: datetime, date_end: datetime):
         items = self.dao.get_statistic(item_id, date_start, date_end)
+        """
+        List[tuple] to List[ShopUnit]
+        """
         for i in range(len(items)):
             dt_str = items[i][5].strftime("%Y-%m-%dT%H:%M:%S.000Z")
             items[i] = ShopUnit(id=items[i][0], name=items[i][1], parentId=items[i][2], price=items[i][3],

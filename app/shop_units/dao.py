@@ -1,6 +1,6 @@
 import os
 from datetime import datetime
-from typing import List, Dict, Protocol, Tuple
+from typing import List, Dict, Protocol, Tuple, Any
 from uuid import UUID
 from dotenv import load_dotenv
 from app.dto import ShopUnitImport, ShopUnit, ShopUnitType
@@ -12,7 +12,11 @@ psycopg2.extras.register_uuid()
 load_dotenv()
 
 
-def item_to_unit(item: tuple, children: Dict[UUID, tuple]) -> ShopUnit:
+def item_to_unit(item: tuple, children: Dict[Any, tuple]) -> ShopUnit:
+    """
+    this function make item to unit and all children items to units recursive.
+    item is tuple(0:id, 1:name, 2:parent_id, 3:price, 4:type, 5:update_date)
+    """
     dt_str = item[5].strftime("%Y-%m-%dT%H:%M:%S.000Z")
     unit = ShopUnit(id=item[0], name=item[1], parentId=item[2], price=item[3], type=item[4], date=dt_str)
     if item[0] in children:
@@ -24,17 +28,21 @@ def item_to_unit(item: tuple, children: Dict[UUID, tuple]) -> ShopUnit:
     return unit
 
 
-def making_list_children(items: list):
-    dict_of_children = dict()
+def making_list_children(items: List[tuple]):
+    """
+    children are key:item value: list of children
+    item is tuple(0:id, 1:name, 2:parent_id, 3:price, 4:type, 5:update_date)
+    """
+    children = dict()
     for i in range(len(items)):
         item = items[i]
         if item[2] is not None:
-            if item[2] not in dict_of_children:
-                dict_of_children[item[2]] = list()
-                dict_of_children[item[2]].append(item)
+            if item[2] not in children:
+                children[item[2]] = list()
+                children[item[2]].append(item)
             else:
-                dict_of_children[item[2]].append(item)
-    unit = item_to_unit(items[0], dict_of_children)
+                children[item[2]].append(item)
+    unit = item_to_unit(items[0], children)
     return unit
 
 
@@ -83,8 +91,11 @@ class DAO(Protocol):
 
 class PostgresDAO:
     def __init__(self, conn):
+        """
+        connect with db and migrations
+        """
         self._conn = conn
-        migrations = read_migrations('db/migrations/')
+        migrations = read_migrations('../db/migrations/')
         db_conn = get_backend(os.environ['PG_DSN'])
         db_conn.apply_migrations(db_conn.to_apply(migrations))
 
@@ -97,6 +108,7 @@ class PostgresDAO:
             with self._conn.cursor() as cursor:
                 for item in items:
                     if item.parent_id is not None:
+                        """Check that parent has not type OFFER"""
                         cursor.execute(
                             """
                                 select type from shop_units where id = %s;
@@ -108,6 +120,8 @@ class PostgresDAO:
                             raise ValidationError
                         if parent_type[0][0] == ShopUnitType.OFFER:
                             raise ValidationError
+
+                    """Insert or update all columns"""
                     cursor.execute(
                         """
                         insert into shop_units(id, name, parent_id, price, type, update_date)
@@ -119,17 +133,14 @@ class PostgresDAO:
                             item.id, item.name, item.parent_id, item.price, item.type, update_date,
                             item.name, item.parent_id, item.price, item.type, update_date)
                     )
-                    cursor.execute(
-                        """
-                        SELECT * FROM information_schema.tables;;
-                        """
-                    )
+                    """Insert to table for statistic"""
                     cursor.execute(
                         """
                          insert into statistic_shop_units(id, name, parent_id, price, type, update_date)
                         values(%s, %s, %s, %s, %s, %s)
                         """, (item.id, item.name, item.parent_id, item.price, item.type, update_date)
                     )
+                    """Update date for parent's"""
                     cursor.execute(
                         """
                         update shop_units x set update_date = %s from (
@@ -154,6 +165,10 @@ class PostgresDAO:
 
     def get_item(self, item_id: UUID) -> ShopUnit:
         with self._conn.cursor() as cursor:
+            """
+            Select item + children 
+            Recursive sql request
+            """
             cursor.execute(
                 """
                 with recursive tree as (
@@ -175,6 +190,10 @@ class PostgresDAO:
 
     def delete_item(self, item_id: UUID):
         with self._conn.cursor() as cursor:
+            """
+            Delete
+            Table shop_units has constraint that allows cascade on delete
+            """
             cursor.execute(
                 """
                 delete from shop_units where id = %s returning id ;
@@ -187,6 +206,10 @@ class PostgresDAO:
 
     def get_sales(self, date: datetime) -> List[Tuple]:
         with self._conn.cursor() as cursor:
+            """
+            Getting a list of products 
+            whose price has been updated in the last 24 hours from the time passed in the request.
+            """
             cursor.execute(
                 """
                 select * from shop_units su where (su.type='OFFER' and 
@@ -205,6 +228,9 @@ class PostgresDAO:
 
     def get_statistic(self, item_id: UUID, date_start: datetime, date_end: datetime) -> List[Tuple]:
         with self._conn.cursor() as cursor:
+            """
+            Get statistics for the interval
+            """
             cursor.execute(
                 """select * from statistic_shop_units su where (su.id=%s and su.update_date>=%s and 
                 su.update_date<=%s); """, (item_id, date_start, date_end)
